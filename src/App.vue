@@ -1,7 +1,6 @@
 <script setup>
-import ListShower from "./components/ListShower.vue";
-import LunarConverter from "./components/LunarConverter.vue";
 import Calendar2 from "./components/Calendar2.vue";
+import TagArea from "./components/TagArea.vue";
 </script>
 
 <template>
@@ -16,6 +15,7 @@ import Calendar2 from "./components/Calendar2.vue";
     <div class="mc">
       <Calendar2 />
     </div>
+    <TagArea />
   </main>
 </template>
 
@@ -33,15 +33,7 @@ import Calendar2 from "./components/Calendar2.vue";
   text-align: center;
   color: #2c3e50;
 }
-/* header {
-  line-height: 1.5;
-}
-
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
-
+/* 
 @media (min-width: 1024px) {
   header {
     display: flex;
@@ -58,5 +50,6 @@ import Calendar2 from "./components/Calendar2.vue";
     place-items: flex-start;
     flex-wrap: wrap;
   }
-} */
+} 
+*/
 </style>
