@@ -16,9 +16,6 @@ import Calendar2 from "./components/Calendar2.vue";
     <div class="mc">
       <Calendar2 />
     </div>
-    <!-- <TheWelcome /> -->
-    <ListShower size="4" my_title="my title"></ListShower>
-    <LunarConverter></LunarConverter>
   </main>
 </template>
 

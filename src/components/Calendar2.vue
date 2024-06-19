@@ -38,20 +38,24 @@
       >
         {{ day }}
       </div>
-      <div class="calendar-cell" v-for="(day, index) in days" :key="index">
-        {{ day }}
-      </div>
+      <CalendarCell
+        v-for="(dateInfo, index) in dateInfos"
+        :key="index"
+        :dateInfo="dateInfo"
+      >
+      </CalendarCell>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, watch } from "vue";
+import CalendarCell from "./CalendarCell.vue";
 
-const date_now = new Date();
+const full_date_now = new Date();
 const currentDate = ref(new Date());
-const day_header_list = ref(["日", "一", "二", "三", "四", "五", "六"]);
-let if_start_from_monday = ref(false);
+// const day_header_list = ref(["日", "一", "二", "三", "四", "五", "六"]);
+// let if_start_from_monday = ref(false);
 const day_header = reactive({
   if_start_from_monday: false,
   list: ["日", "一", "二", "三", "四", "五", "六"],
@@ -67,29 +71,61 @@ const day_header_watch = watch(
   }
 );
 
-const days = computed(() => {
+const dateInfos = computed(() => {
+  console.log("compute dateInfos");
   const year = currentDate.value.getFullYear();
   const month = currentDate.value.getMonth();
-
   // 获取当前月份的第一天
   const firstDay = new Date(year, month, 1);
-  // 获取该月的天数
+  // 获取该月的天数（日期参数0表示获取上个月的最后一天的日期）
   const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const daysInLastMonth = new Date(year, month, 0).getDate();
   // 存储要渲染的日期
-  const daysArray = [];
-
+  const datesArray = [];
   // 插入上月日期
-  const last_month_rest =
+  const last_month_rest_count =
     (7 + firstDay.getDay() - day_header.if_start_from_monday) % 7;
-  for (let i = 0; i < last_month_rest; i++) {
-    daysArray.push("");
+  for (
+    let i = daysInLastMonth - last_month_rest_count + 1;
+    i <= daysInLastMonth;
+    i++
+  ) {
+    datesArray.push({
+      date: i,
+      isToday: false,
+      isCurrentMonth: false,
+      // TODO: complete record of last_month_rest
+      activities: [],
+    });
   }
   // 插入本月日期
+  const date_today = full_date_now.getDate();
   for (let i = 1; i <= daysInMonth; i++) {
-    daysArray.push(i);
+    datesArray.push({
+      date: i,
+      isToday:
+        currentDate.value.getFullYear() == full_date_now.getFullYear() &&
+        currentDate.value.getMonth() == full_date_now.getMonth() &&
+        date_today == i,
+      isCurrentMonth: true,
+      // TODO: complete record of last_month_rest
+      activities: [],
+    });
   }
 
-  return daysArray;
+  // 插入下月日期
+  const daysArray_len = datesArray.length;
+  for (let i = 1; i <= 42 - daysArray_len; i++) {
+    datesArray.push({
+      date: i,
+      isToday: false,
+      isCurrentMonth: false,
+      // TODO: complete record of last_month_rest
+      activities: [],
+    });
+  }
+
+  return datesArray;
 });
 
 const formattedDate = computed(() => {
@@ -120,16 +156,17 @@ const nextMonth = () => {
 };
 
 const focusOnToday = () => {
-  currentDate.value = date_now;
+  currentDate.value = full_date_now;
   currentDate.value = new Date(currentDate.value);
 };
 </script>
 
 <style>
 .calendar {
-  max-width: 400px;
+  max-width: 500px;
   margin: 0 auto;
-  background-color: #de75d9;
+  background-color: black;
+  color: #f0f0f0;
 }
 
 .calendar-setting {
@@ -154,7 +191,7 @@ const focusOnToday = () => {
 .calendar-cell {
   text-align: center;
   padding: 0.5rem;
-  background-color: #f0f0f0;
+  /* background-color: #f0f0f0; */
   border-radius: 0.25rem;
 }
 
