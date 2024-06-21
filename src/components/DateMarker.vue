@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="datemarker">
     <div class="calendar">
       <div class="calendar-setting">
         <label>
@@ -92,7 +92,10 @@
         </div>
       </div>
     </div>
-    <button>Mark</button>
+    <div class="operation-area">
+      <button class="btn-operation btn-mark" @click="mark">Mark</button>
+      <button class="btn-operation btn-erase" @click="erase">Erase</button>
+    </div>
   </div>
 </template>
 
@@ -165,6 +168,7 @@ const tags = reactive([
   //     order: 2,
   //   },
 ]);
+
 const c_tags = computed(() => {
   const firstTrueObject = tags.find((obj) => obj.isSelected === true);
   if (firstTrueObject) {
@@ -349,12 +353,21 @@ const deleteTag = (index) => {
 </script>
 
 <style scoped>
+.datemarker {
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: start;
+  align-items: center;
+  --backgroundColor: black;
+  --highlightSelected: whitesmoke;
+  --textColor: white;
+}
 /* calendar begin */
 .calendar {
-  width: 500px;
+  width: 100%;
   margin: 0;
-  background-color: black;
-  color: #f0f0f0;
+  background-color: var(--backgroundColor);
+  color: var(--textColor);
 }
 
 .calendar-setting {
@@ -365,7 +378,7 @@ const deleteTag = (index) => {
 }
 .calendar-controller {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   margin-bottom: 0.5rem;
 }
@@ -395,10 +408,10 @@ const deleteTag = (index) => {
   color: grey;
 }
 .calendar-cell-highlighted {
-  border: 3px dashed whitesmoke;
+  border: 3px dashed var(--highlightSelected);
 }
 .calendar-cell-selected {
-  border: 3px solid whitesmoke;
+  border: 3px solid var(--highlightSelected);
 }
 /* calendar end */
 
@@ -408,9 +421,9 @@ const deleteTag = (index) => {
   flex-direction: row;
   justify-content: space-between;
   align-items: flex-start;
-  width: 500px;
-  background-color: black;
-  color: white;
+  width: 100%;
+  background-color: var(--backgroundColor);
+  color: var(--textColor);
 }
 
 .multi_pick,
@@ -448,7 +461,8 @@ ul {
   padding: 2px 5px;
   margin: 10px;
   font-size: 18px;
-  border: 3px solid black;
+  border: 3px solid var(--backgroundColor);
+  cursor: pointer;
 }
 
 .custom_tag {
@@ -456,7 +470,7 @@ ul {
 }
 
 .selected-tag {
-  border: 3px solid whitesmoke;
+  border: 3px solid var(--highlightSelected);
 }
 
 .delete-btn {
@@ -464,9 +478,9 @@ ul {
   top: -10px;
   left: -10px;
   background: red;
-  color: white;
+  color: var(--textColor);
   border: none;
-  /* border-radius: 50%; */
+  border-radius: 50%;
   cursor: pointer;
   width: 20px;
   height: 20px;
@@ -488,13 +502,13 @@ ul {
 
 .modal-content {
   position: absolute;
-  background-color: #fff;
+  background-color: var(--backgroundColor);
   padding: 20px;
   border-radius: 4px;
   width: 300px;
   top: 50%;
   left: 50%;
-  color: black;
+  color: var(--textColor);
   transform: translate(-50%, -50%);
 }
 
@@ -504,7 +518,7 @@ ul {
 }
 
 .sepan {
-  background-color: black;
+  background-color: var(--backgroundColor);
 }
 .color {
   width: 50px;
@@ -514,7 +528,24 @@ ul {
   display: inline-block;
   color: rgb(255, 255, 255);
   text-align: center;
-  /* color: #d3d301; */
 }
 /* tag area end*/
+
+/* operation area begin */
+.operation-area {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  background-color: var(--backgroundColor);
+  color: var(--textColor);
+}
+.btn-operation {
+  width: 50%;
+  padding: 5px;
+  font-size: 18px;
+  cursor: pointer;
+}
+/* operation area end */
 </style>
