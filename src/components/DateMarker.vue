@@ -32,7 +32,7 @@
           :class="{
             'calendar-cell-diluted': !dateInfo.isCurrentMonth,
             'calendar-cell-highlighted': dateInfo.isToday,
-            'calendar-cell-selected': selected_date == dateInfo.date,
+            'calendar-cell-selected': isSelectedDate(dateInfo.date),
           }"
           @click="select_date(dateInfo.date)"
         >
@@ -166,6 +166,23 @@ const tags = reactive([
   //   },
 ]);
 const c_tags = computed(() => {
+  const firstTrueObject = tags.find((obj) => obj.isSelected === true);
+  if (firstTrueObject) {
+    // 如果找到了，将其他对象的 isSelected 属性设为 false
+    tags.forEach((obj) => {
+      if (obj !== firstTrueObject) {
+        obj.isSelected = false;
+      }
+    });
+  } else {
+    // 如果没有找到，设置第一个对象的 isSelected 属性为 true
+    if (tags.length > 0) {
+      tags.forEach((obj) => {
+        obj.isSelected = false;
+      });
+      tags[0].isSelected = true;
+    }
+  }
   return tags;
 });
 // 当前选择的tag
@@ -238,6 +255,14 @@ const dateInfos = computed(() => {
 
 const select_date = (date) => {
   selected_date.value = date;
+};
+
+const isSelectedDate = (date) => {
+  return (
+    date.getFullYear() == selected_date.value.getFullYear() &&
+    date.getMonth() == selected_date.value.getMonth() &&
+    date.getDate() == selected_date.value.getDate()
+  );
 };
 
 const formattedDate = computed(() => {
