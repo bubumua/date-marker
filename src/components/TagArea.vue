@@ -14,7 +14,7 @@
         v-for="(tag, index) in tags"
         :key="index"
         class="tag custom_tag"
-        :class="{ selected_tag: tag === selectedTag }"
+        :class="{ 'selected-tag': tag === selectedTag }"
         :style="{ backgroundColor: tag.color }"
         draggable="true"
         @dragstart="dragStart(index)"
@@ -256,7 +256,7 @@ ul {
   position: relative;
 }
 
-.selected_tag {
+.selected-tag {
   border: 3px solid whitesmoke;
 }
 

@@ -5,22 +5,6 @@
         <input type="checkbox" v-model="day_header.if_start_from_monday" />
         Start from Monday
       </label>
-      <!-- <label>
-        <input type="checkbox" v-model="day_header.if_show_week_number" />
-        显示周数
-      </label> -->
-      <!-- <label>
-        <input type="checkbox" v-model="day_header.if_show_day_number" />
-        显示天数
-      </label> -->
-      <!-- <label>
-        <input type="checkbox" v-model="day_header.if_show_day_name" />
-        显示星期
-      </label> -->
-      <!-- <label>
-        <input type="checkbox" v-model="day_header.if_show_day_date" />
-        显示日期
-      </label> -->
     </div>
     <div class="calendar-controller">
       <button @click="prevYear">上一年</button>
@@ -42,6 +26,11 @@
         v-for="(dateInfo, index) in dateInfos"
         :key="index"
         :dateInfo="dateInfo"
+        :selected_date="selected_date"
+        :class="{
+          'calendar-cell-highlighted': dateInfo.isToday,
+        }"
+        @click="select_date(dateInfo.date)"
       >
       </CalendarCell>
     </div>
@@ -54,13 +43,14 @@ import CalendarCell from "./CalendarCell.vue";
 
 const full_date_now = new Date();
 const currentDate = ref(new Date());
-// const day_header_list = ref(["日", "一", "二", "三", "四", "五", "六"]);
-// let if_start_from_monday = ref(false);
+let selected_date = ref(full_date_now);
+const chose_date = ref(full_date_now);
 const day_header = reactive({
   if_start_from_monday: false,
   list: ["日", "一", "二", "三", "四", "五", "六"],
 });
 
+// 日历显示方式改变侦听器
 const day_header_watch = watch(
   // 这里必须使用回调侦听响应式数据的属性
   () => day_header.if_start_from_monday,
@@ -72,26 +62,27 @@ const day_header_watch = watch(
 );
 
 const dateInfos = computed(() => {
-  console.log("compute dateInfos");
-  const year = currentDate.value.getFullYear();
-  const month = currentDate.value.getMonth();
-  // 获取当前月份的第一天
-  const firstDay = new Date(year, month, 1);
-  // 获取该月的天数（日期参数0表示获取上个月的最后一天的日期）
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const daysInLastMonth = new Date(year, month, 0).getDate();
   // 存储要渲染的日期
   const datesArray = [];
-  // 插入上月日期
+  // 获取当前日期的年份和月份
+  const year = currentDate.value.getFullYear();
+  const month = currentDate.value.getMonth();
+
+  // 插入前月日期
+  // 获取当前月份的第一天
+  const firstDay = new Date(year, month, 1);
+  // 计算当月缩进
   const last_month_rest_count =
     (7 + firstDay.getDay() - day_header.if_start_from_monday) % 7;
+  // 前一月的天数
+  const daysInLastMonth = new Date(year, month, 0).getDate();
   for (
     let i = daysInLastMonth - last_month_rest_count + 1;
     i <= daysInLastMonth;
     i++
   ) {
     datesArray.push({
-      date: i,
+      date: new Date(year, month - 1, i),
       isToday: false,
       isCurrentMonth: false,
       // TODO: complete record of last_month_rest
@@ -99,10 +90,12 @@ const dateInfos = computed(() => {
     });
   }
   // 插入本月日期
+  // 获取本月的天数（日期参数0表示获取上个月的最后一天的日期）
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
   const date_today = full_date_now.getDate();
   for (let i = 1; i <= daysInMonth; i++) {
     datesArray.push({
-      date: i,
+      date: new Date(year, month, i),
       isToday:
         currentDate.value.getFullYear() == full_date_now.getFullYear() &&
         currentDate.value.getMonth() == full_date_now.getMonth() &&
@@ -117,7 +110,7 @@ const dateInfos = computed(() => {
   const daysArray_len = datesArray.length;
   for (let i = 1; i <= 42 - daysArray_len; i++) {
     datesArray.push({
-      date: i,
+      date: new Date(year, month + 1, i),
       isToday: false,
       isCurrentMonth: false,
       // TODO: complete record of last_month_rest
@@ -127,6 +120,20 @@ const dateInfos = computed(() => {
 
   return datesArray;
 });
+
+const select_date = (date) => {
+  // selected_date.value = new Date(date);
+  selected_date.value = date;
+  chose_date.value = date;
+};
+
+const isSameDate = (date1, date2) => {
+  return (
+    date1.getFullYear() === date2.getFullYear() &&
+    date1.getMonth() === date2.getMonth() &&
+    date1.getDate() === date2.getDate()
+  );
+};
 
 const formattedDate = computed(() => {
   const year = currentDate.value.getFullYear();
@@ -163,7 +170,7 @@ const focusOnToday = () => {
 
 <style>
 .calendar {
-  max-width: 500px;
+  width: 500px;
   margin: 0 auto;
   background-color: black;
   color: #f0f0f0;
@@ -191,11 +198,24 @@ const focusOnToday = () => {
 .calendar-cell {
   text-align: center;
   padding: 0.5rem;
-  /* background-color: #f0f0f0; */
   border-radius: 0.25rem;
+  box-sizing: border-box;
 }
 
 .calender-cell-header {
   font-weight: bold;
 }
+
+.calendar-cell-highlighted {
+  border: 3px dashed whitesmoke;
+}
+
+.calendar-cell-selected {
+  border: 3px solid whitesmoke;
+  /* font-size: large; */
+}
+
+/* .selected-date {
+  border: 3px solid whitesmoke;
+} */
 </style>
