@@ -60,7 +60,7 @@
             v-show="isEditing"
             @click.stop="deleteTag(index)"
           >
-            x
+            X
           </button>
           {{ tag.name }}
         </li>
@@ -87,14 +87,40 @@
         <div class="modal-content">
           <h3>Add a new tag</h3>
           <input v-model="newTag.name" placeholder="Enter tag name" />
-          <button @click="addTag(newTag.name)" v-if="isAdding">Add</button>
+          <button @click="addTag(newTag.name, selected_color)" v-if="isAdding">
+            Add
+          </button>
           <button @click="closeAddTagModal">Cancel</button>
+        </div>
+        <div class="sepan">
+          <label
+            v-for="color in COLORS"
+            :for="color.name"
+            :key="color.name"
+            :class="[
+              'color',
+              { 'color-selected': selected_color.name === color.name },
+            ]"
+            :style="{ backgroundColor: color.rgb }"
+          >
+            <input
+              type="radio"
+              v-model="selected_color"
+              :value="color"
+              :id="color.name"
+            />
+          </label>
+          <!-- {{ color.name }} -->
         </div>
       </div>
     </div>
     <div class="operation-area">
-      <button class="btn-operation btn-mark" @click="mark">Mark</button>
-      <button class="btn-operation btn-erase" @click="erase">Erase</button>
+      <button class="btn-operation btn-mark" @click="addActivityRecord">
+        Mark
+      </button>
+      <button class="btn-operation btn-erase" @click="deleteActivityRecord">
+        Erase
+      </button>
     </div>
   </div>
 </template>
@@ -150,6 +176,7 @@ const isAdding = ref(Boolean(false));
 const showModal = ref(Boolean(false));
 // tag拖拽
 const draggedTagIndex = ref(-1);
+const selected_color = ref(COLORS[0]);
 // 用户tags
 const tags = reactive([
   {
@@ -157,18 +184,17 @@ const tags = reactive([
     color: COLORS[0].rgb,
     isSelected: false,
   },
-  //   {
-  //     name: "看看你的",
-  //     color: COLORS[0].rgb,
-  //     order: 1,
-  //   },
-  //   {
-  //     name: "看看你的",
-  //     color: COLORS[0].rgb,
-  //     order: 2,
-  //   },
 ]);
-
+// activity records
+// {
+//   activity_name: {
+//     color: String,
+//     order: Number,
+//     records: [ISODate],
+//    } ,
+// }
+const activityRecord = reactive({});
+// 处理过选中属性的tags
 const c_tags = computed(() => {
   const firstTrueObject = tags.find((obj) => obj.isSelected === true);
   if (firstTrueObject) {
@@ -310,11 +336,11 @@ const closeAddTagModal = () => {
   showModal.value = false;
   isAdding.value = false;
 };
-const addTag = (name, color = COLORS[0].rgb) => {
+const addTag = (name, color = COLORS[0]) => {
   if (name !== "") {
     newTag = {
       name: name,
-      color: color,
+      color: color.rgb,
       isSelected: false,
     };
     tags.push(newTag);
@@ -349,6 +375,49 @@ const selectTag = (tag) => {
 // 删除tag
 const deleteTag = (index) => {
   tags.splice(index, 1);
+};
+
+// 增加记录
+const addActivityRecord = () => {
+  const tagIndex = tags.findIndex(
+    (item) => item.name === selected_tag.value.name
+  );
+  if (tagIndex < 0) {
+    console.log("error: findIndex in addActivityRecord < 0");
+    return;
+  }
+  // console.log(`tagIndex: ${tagIndex}`);
+  // 若已有该活动的记录，则追加并排序
+  if (selected_tag.value.name in activityRecord) {
+    activityRecord[selected_tag.value.name].records.push(selected_date.value);
+    activityRecord[selected_tag.value.name].records.sort((a, b) => a - b);
+  }
+  // 若没有该活动的记录，则新建
+  else {
+    activityRecord[selected_tag.value.name] = {
+      color: selected_tag.value.color,
+      order: tagIndex,
+      records: [],
+    };
+    activityRecord[selected_tag.value.name].records.push(selected_date.value);
+  }
+  console.log(activityRecord);
+};
+// 删除记录
+const deleteActivityRecord = () => {
+  const tagIndex = tags.findIndex(
+    (item) => item.name === selected_tag.value.name
+  );
+  if (tagIndex < 0) {
+    console.log("error: findIndex in addActivityRecord < 0");
+    return;
+  }
+  // console.log(`tagIndex: ${tagIndex}`);
+  // 若有该活动的记录，则删除最新的记录
+  if (selected_tag.value.name in activityRecord) {
+    activityRecord[selected_tag.value.name].records.pop();
+  }
+  console.log(activityRecord);
 };
 </script>
 
@@ -492,24 +561,23 @@ ul {
 .modal {
   display: block;
   position: fixed;
-  left: 0;
+  /* left: 0;
   top: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  width: 100%; */
+  width: 200px;
+  top: 50%;
+  left: 50%;
+  background-color: rgba(0, 0, 0, 0.8);
   z-index: 1;
 }
 
 .modal-content {
-  position: absolute;
-  background-color: var(--backgroundColor);
-  padding: 20px;
+  /* position:absolute; */
+  /* background-color: var(--backgroundColor); */
+  /* padding: 20px; */
   border-radius: 4px;
-  width: 300px;
-  top: 50%;
-  left: 50%;
   color: var(--textColor);
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) linear 1s;
 }
 
 .close-button {
@@ -518,17 +586,45 @@ ul {
 }
 
 .sepan {
-  background-color: var(--backgroundColor);
+  /* background-color: var(--backgroundColor); */
 }
+
+input[type="radio"] {
+  display: none;
+}
+
 .color {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  margin: 10px;
   display: inline-block;
-  color: rgb(255, 255, 255);
+  position: relative;
+  box-sizing: border-box;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  margin: 0 5px;
+  cursor: pointer;
   text-align: center;
 }
+
+.color-selected {
+  border: 3px solid var(--highlightSelected);
+}
+/* .color::after {
+  content: "";
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 12px; 
+  height: 12px; 
+  background-color: #3498db;
+  border-radius: 50%;
+} */
+
+/* 当radio按钮被选中时，显示内圆 */
+/* input[type="radio"]:checked + .color::after {
+  display: block;
+} */
 /* tag area end*/
 
 /* operation area begin */
