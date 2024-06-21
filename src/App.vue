@@ -1,38 +1,30 @@
-<script setup>
-import Calendar2 from "./components/Calendar2.vue";
-import TagArea from "./components/TagArea.vue";
-</script>
-
 <template>
-  <header>
-    <!-- <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-    </div> -->
-  </header>
-
+  <header></header>
   <main>
     <div class="mc">
-      <Calendar2 />
+      <DateMarker></DateMarker>
     </div>
-    <TagArea />
   </main>
 </template>
+
+<script setup>
+import DateMarker from "./components/DateMarker.vue";
+</script>
 
 <style scoped>
 * {
   margin: 0;
   padding: 0;
-  /* box-sizing: border-box; */
+  box-sizing: border-box;
 }
 
-.mc {
+/* .mc {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-}
+} */
 /* 
 @media (min-width: 1024px) {
   header {
