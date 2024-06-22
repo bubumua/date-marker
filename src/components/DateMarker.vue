@@ -34,6 +34,7 @@
             'calendar-cell-highlighted': dateInfo.isToday,
             'calendar-cell-selected': isSelectedDate(dateInfo.date),
           }"
+          :style="calendar_cell_activity_highlight(dateInfo)"
           @click="select_date(dateInfo.date)"
         >
           <span>{{ dateInfo.date.getDate() }}</span>
@@ -223,6 +224,21 @@ let newTag = reactive({
   color: COLORS[0].rgb,
 });
 
+// 在日期层面上比较两个Date
+const compareDateOnDate = (date1, date2) => {
+  const d1 = new Date(date1);
+  const d2 = new Date(date2);
+  d1.setHours(0, 0, 0, 0);
+  d2.setHours(0, 0, 0, 0);
+  if (d1 < d2) {
+    return -1;
+  } else if (d1 > d2) {
+    return 1;
+  } else {
+    return 0;
+  }
+};
+
 const dateInfos = computed(() => {
   // 存储要渲染的日期
   const datesArray = [];
@@ -238,17 +254,13 @@ const dateInfos = computed(() => {
     (7 + firstDay.getDay() - day_header.if_start_from_monday) % 7;
   // 前一月的天数
   const daysInLastMonth = new Date(year, month, 0).getDate();
-  for (
-    let i = daysInLastMonth - last_month_rest_count + 1;
-    i <= daysInLastMonth;
-    i++
-  ) {
+  const calendar_start_date = daysInLastMonth - last_month_rest_count + 1;
+  for (let i = calendar_start_date; i <= daysInLastMonth; i++) {
     datesArray.push({
       date: new Date(year, month - 1, i),
       isToday: false,
       isCurrentMonth: false,
-      // TODO: complete record of last_month_rest
-      activities: [],
+      activity: null,
     });
   }
   // 插入本月日期
@@ -263,23 +275,53 @@ const dateInfos = computed(() => {
         currentDate.value.getMonth() == full_date_now.getMonth() &&
         date_today == i,
       isCurrentMonth: true,
-      // TODO: complete record of last_month_rest
-      activities: [],
+      activity: null,
     });
   }
 
   // 插入下月日期
-  const daysArray_len = datesArray.length;
-  for (let i = 1; i <= 42 - daysArray_len; i++) {
+  const last_cur_sum_len = datesArray.length;
+  const calendar_end_date = 42 - last_cur_sum_len;
+  for (let i = 1; i <= calendar_end_date; i++) {
     datesArray.push({
       date: new Date(year, month + 1, i),
       isToday: false,
       isCurrentMonth: false,
-      // TODO: complete record of last_month_rest
-      activities: [],
+      activity: null,
     });
   }
-
+  // 计算日期上是否有记录
+  if (activityRecord[selected_tag.value.name]) {
+    let records = activityRecord[selected_tag.value.name].records;
+    records.reverse();
+    // 利用记录的时间有序性，从记录的尾部向前查，即从新到旧遍历。
+    for (const recordDate of records) {
+      const recordDate_month = recordDate.getMonth();
+      const recordDate_date = recordDate.getDate();
+      // 若记录在当前日历范围内，则标记对应日期，直至某个记录不在范围内，结束遍历。
+      if (
+        !(
+          compareDateOnDate(recordDate, datesArray[0].date) < 0 ||
+          compareDateOnDate(recordDate, datesArray.at(-1).date) > 0
+        )
+      ) {
+        if (recordDate_month == month) {
+          datesArray.at(last_month_rest_count + recordDate_date - 1).activity =
+            selected_tag.value;
+        } else if (
+          recordDate_month == new Date(year, month - 1, 1).getMonth()
+        ) {
+          datesArray.at(recordDate_date - calendar_start_date).activity =
+            selected_tag.value;
+        } else {
+          datesArray.at(last_cur_sum_len + recordDate_date - 1).activity =
+            selected_tag.value;
+        }
+      } else {
+        break;
+      }
+    }
+  }
   return datesArray;
 });
 
@@ -292,6 +334,14 @@ const isSelectedDate = (date) => {
     date.getFullYear() == selected_date.value.getFullYear() &&
     date.getMonth() == selected_date.value.getMonth() &&
     date.getDate() == selected_date.value.getDate()
+  );
+};
+
+const isSameDate = (date1, date2) => {
+  return (
+    date1.getFullYear() === date2.getFullYear() &&
+    date1.getMonth() === date2.getMonth() &&
+    date1.getDate() === date2.getDate()
   );
 };
 
@@ -386,7 +436,6 @@ const addActivityRecord = () => {
     console.log("error: findIndex in addActivityRecord < 0");
     return;
   }
-  // console.log(`tagIndex: ${tagIndex}`);
   // 若已有该活动的记录，则追加并排序
   if (selected_tag.value.name in activityRecord) {
     activityRecord[selected_tag.value.name].records.push(selected_date.value);
@@ -401,7 +450,7 @@ const addActivityRecord = () => {
     };
     activityRecord[selected_tag.value.name].records.push(selected_date.value);
   }
-  console.log(activityRecord);
+  // console.log(`activityRecord: ${activityRecord}`);
 };
 // 删除记录
 const deleteActivityRecord = () => {
@@ -412,12 +461,30 @@ const deleteActivityRecord = () => {
     console.log("error: findIndex in addActivityRecord < 0");
     return;
   }
-  // console.log(`tagIndex: ${tagIndex}`);
   // 若有该活动的记录，则删除最新的记录
   if (selected_tag.value.name in activityRecord) {
-    activityRecord[selected_tag.value.name].records.pop();
+    activityRecord[selected_tag.value.name].records.reverse();
+    const duplicated_index = activityRecord[
+      selected_tag.value.name
+    ].records.findIndex((dt) => isSameDate(dt, selected_date.value));
+    if (duplicated_index >= 0) {
+      activityRecord[selected_tag.value.name].records.splice(
+        duplicated_index,
+        1
+      );
+    }
+    activityRecord[selected_tag.value.name].records.reverse();
   }
   console.log(activityRecord);
+};
+
+// 根据记录设置日期背景色
+const calendar_cell_activity_highlight = (dateInfo) => {
+  if (dateInfo.activity) {
+    return { backgroundColor: dateInfo.activity.color };
+  } else {
+    return {};
+  }
 };
 </script>
 
